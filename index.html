@@ -1,0 +1,109 @@
+<html>
+
+<head>
+    <title>Cudo Miner</title>
+    <link rel="stylesheet" href="https://github.hubspot.com/odometer/themes/odometer-theme-car.css" />
+    <link rel="stylesheet" href="https://github.hubspot.com/odometer/themes/odometer-theme-default.css" />
+    <link rel="stylesheet" href="https://github.hubspot.com/odometer/themes/odometer-theme-plaza.css" />
+    <script src="https://github.hubspot.com/odometer/odometer.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+        integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <style>
+        .odometer.odometer-theme-plaza {
+            font-size: 50px;
+        }
+    </style>
+    <script>
+        var sps = 0.1;
+        var lastBalance = 0;
+        var lastPending = 0;
+        var lastCurrent = 0;
+        var lastCheck = 0;
+        function httpGet() {
+            var xhr = new XMLHttpRequest();
+            var url = "https://cors-anywhere.herokuapp.com/http://api.cudo.org/v1/organizations/15714/stats?coin=bitcoin";
+
+            // Called whenever the readyState attribute changes 
+            xhr.onreadystatechange = function () {
+
+                // Check if fetch request is done
+                if (xhr.readyState == 4 && xhr.status == 200) {
+
+                    // Parse the JSON string
+                    var jsonData = JSON.parse(xhr.responseText);
+
+                    // Call the showArtists(), passing in the parsed JSON string
+                    update(jsonData);
+                }
+            };
+
+            // Do the HTTP call using the url variable we specified above
+            xhr.open("GET", url, true);
+            xhr.setRequestHeader("Access-Control-Allow-Origin", "*");
+            xhr.setRequestHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS");
+            xhr.setRequestHeader("Access-Control-Allow-Headers", "Origin, Content-Type, X-Auth-Token");
+            xhr.send();
+        };
+
+        function update(data) {
+            if (lastCheck > 1) {
+                sps = (data.balance * 100000000 - lastCheck) / 60;
+                console.log(data.balance * 100000000);
+                console.log("lastCheck", lastCheck);
+            };
+            lastCheck = data.balance * 100000000;
+            current.innerHTML = data.currentBalance * 100000000;
+            pending.innerHTML = data.pendingBalance * 100000000;
+            total.innerHTML = data.balance * 100000000;
+            lastBalance = data.balance * 100000000;
+            lastPending = data.pendingBalance * 100000000;
+            lastCurrent = data.currentBalance * 100000000;
+        };
+
+        function render() {
+            pending.innerHTML = Math.round((lastPending + sps) * 10) / 10;
+            total.innerHTML = Math.round((lastBalance + sps) * 10) / 10;
+            lastPending = lastPending +  sps;
+            lastBalance  = lastBalance + sps;
+        };
+
+        setInterval(function () {
+            httpGet();
+        }, 120000);
+
+        setInterval(function () {
+            render();
+        }, 2000);
+
+        setTimeout(function () {
+            httpGet();
+        }, 1000);
+    </script>
+</head>
+
+<body>
+    <div class="container-lg">
+        <div class="row align-items-center h-25">
+            <div class="col-sm-4">
+                <div class="container">
+                    <h1 id="current" class="display-4 odometer odometer-theme-plaza">0</h1>
+                    <p class="lead">Current</p>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="container">
+                    <h1 id="pending" class="display-4 odometer odometer-theme-plaza">0</h1>
+                    <p class="lead">Pending</p>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="container">
+                    <h1 id="total" class="display-4 odometer odometer-theme-plaza">0</h1>
+                    <p class="lead">Total</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
